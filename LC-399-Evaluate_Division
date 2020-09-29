@@ -1,0 +1,56 @@
+/* You are given equations in the format A / B = k, where A and B are variables represented as strings, and k is a real number (floating-point number).
+Given some queries, return the answers. If the answer does not exist, return -1.0.
+
+Input: equations = [["a","b"],["b","c"]], values = [2.0,3.0], queries = [["a","c"],["b","a"],["a","e"],["a","a"],["x","x"]]
+Output: [6.00000,0.50000,-1.00000,1.00000,-1.00000]
+Explanation: 
+Given: a / b = 2.0, b / c = 3.0
+queries are: a / c = ?, b / a = ?, a / e = ?, a / a = ?, x / x = ?
+return: [6.0, 0.5, -1.0, 1.0, -1.0 ]
+*/
+
+class Solution {
+public:
+    vector<double> calcEquation(vector<vector<string>>& equations, vector<double>& values, vector<vector<string>>& queries) {
+        unordered_map<string, vector<pair<string, double>>> g;
+        buildGraph(equations, values, g);
+
+        vector<double> result(queries.size(), 0);
+        for (int i = 0; i < queries.size(); i++){
+            unordered_set<string> visited;
+            result[i] = dfs(queries[i][0], queries[i][1], visited, g);
+        }
+
+        return result;
+        
+    }
+    
+    // build graph
+    void buildGraph(vector<vector<string>> &eq, vector<double> &values, 
+                    unordered_map<string, vector<pair<string, double>>> &g) {
+        for (int i = 0; i < values.size(); i++) {
+            string src = eq[i][0];
+            string des = eq[i][1];
+            g[src].push_back({des, values[i]});
+            g[des].push_back({src, 1/values[i]});
+        }
+    }
+    
+    double dfs(string &s, string &d, unordered_set<string> &visited, unordered_map<string, vector<pair<string, double>>> &g) {
+        if (g.find(s) == g.end() && g.find(d) == g.end())
+            return -1.0;
+        if (s == d)
+            return 1.0;
+
+        visited.insert(s);
+        for (pair<string, double> ng : g[s]) {
+            if (visited.find(ng.first) == visited.end()) {
+                double ans = dfs(ng.first, d, visited, g);
+                if (ans != -1.0)
+                    return ans * ng.second;
+            }
+        }
+
+        return -1.0;
+    }
+};
